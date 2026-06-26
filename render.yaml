@@ -7,6 +7,8 @@ services:
     runtime: node
     # Build command navigates to the backend directory, installs dependencies, and runs build
     buildCommand: cd backend && npm install --include=dev && npm run build
+    # Run database migrations before starting the web service
+    preDeployCommand: cd backend && npx prisma migrate deploy
     # Start command runs the compiled Express production server
     startCommand: cd backend && npm run start
     plan: free
