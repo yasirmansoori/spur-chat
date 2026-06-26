@@ -1,0 +1,35 @@
+# Render Blueprint Specification for Spurly Backend and PostgreSQL Database
+# To deploy, connect this repository to Render and it will automatically detect this file.
+
+services:
+  - type: web
+    name: spurly-backend
+    runtime: node
+    # Build command navigates to the backend directory, installs dependencies, and runs build
+    buildCommand: cd backend && npm install && npm run build
+    # Start command runs the compiled Express production server
+    startCommand: cd backend && npm run start
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: spurly-db
+          property: connectionString
+      - key: STREAM_ENABLED
+        value: "true"
+      # The following must be configured manually on Render or filled upon deploying:
+      - key: FRONTEND_URL
+        sync: false
+        description: "The URL of the Next.js frontend deployed on Vercel (e.g. https://your-app.vercel.app)"
+      - key: OPENROUTER_API_KEY
+        sync: false
+        description: "Your OpenRouter API Key for AI chat completions"
+
+databases:
+  - name: spurly-db
+    plan: free

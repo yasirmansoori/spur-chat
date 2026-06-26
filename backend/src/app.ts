@@ -17,6 +17,9 @@ import chatRouter from './routes/chat.routes';
 
 const app = express();
 
+// Trust proxy for correct rate limiting behind reverse proxies (like Render)
+app.set('trust proxy', 1);
+
 // Middlewares
 app.use(
   cors({

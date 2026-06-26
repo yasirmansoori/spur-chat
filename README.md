@@ -208,6 +208,16 @@ Open your browser and navigate to **`http://localhost:3000`** to view the Spur C
 
 ---
 
+## 🌐 Production Deployment
+
+Spurly is pre-configured for production deployment on:
+* **Vercel** for the frontend Next.js application.
+* **Render** for the Express backend application and PostgreSQL database (using the included `render.yaml` Blueprint).
+
+For step-by-step instructions on setting up environment variables, configuring CORS, and performing database migrations, please see the [Production Deployment Guide](docs/deployment.md).
+
+---
+
 ## 🔒 API Endpoints
 
 ### Send Message
