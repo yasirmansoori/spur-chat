@@ -23,7 +23,14 @@ export const useChat = () => {
   } = useConversation();
 
   const [localMessages, setLocalMessages] = useState<MessageResponse[]>([]);
+  const localMessagesRef = useRef<MessageResponse[]>([]);
+  const prevSessionIdRef = useRef<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Keep localMessagesRef updated with latest state
+  useEffect(() => {
+    localMessagesRef.current = localMessages;
+  }, [localMessages]);
 
   // 1. Fetch active chat history
   const {
@@ -111,6 +118,8 @@ export const useChat = () => {
       setLocalMessages((prev) => [...prev, userMessage]);
     },
     onSuccess: (data) => {
+      // Update cache with the latest local messages before invalidating to prevent flickering/empty state
+      queryClient.setQueryData(['chatHistory', data.sessionId], localMessagesRef.current);
       // Invalidate queries to refresh lists and details
       queryClient.invalidateQueries({ queryKey: ['chatHistory', data.sessionId] });
       queryClient.invalidateQueries({ queryKey: ['pastConversations'] });
@@ -142,16 +151,35 @@ export const useChat = () => {
 
   const isSending = sendMessageMutation.isPending;
 
-  // Sync historical messages with state, but not while actively sending/streaming a message
+  // Sync historical messages with state, but not while actively sending/streaming a message.
+  // Use prevSessionIdRef to track when the sessionId actually changed (e.g. user selected a different chat)
+  // versus when it is a query refresh of the same chat, avoiding any jitter.
   useEffect(() => {
-    if (isSending) return;
-
-    if (historyData) {
-      setLocalMessages(historyData);
-    } else {
-      setLocalMessages([]);
+    if (isSending) {
+      prevSessionIdRef.current = sessionId;
+      return;
     }
-  }, [historyData, isSending]);
+
+    if (sessionId !== prevSessionIdRef.current) {
+      // Session actually changed (user switched chats or initialized a new chat)
+      if (historyData) {
+        setLocalMessages(historyData);
+        prevSessionIdRef.current = sessionId;
+      } else if (sessionId === 'new' || !sessionId) {
+        setLocalMessages([]);
+        prevSessionIdRef.current = sessionId;
+      } else {
+        // Clear history only when switching to a different loading session
+        setLocalMessages([]);
+        prevSessionIdRef.current = sessionId;
+      }
+    } else {
+      // We are in the same session (ongoing chat). Update only if historyData is loaded.
+      if (historyData) {
+        setLocalMessages(historyData);
+      }
+    }
+  }, [historyData, isSending, sessionId]);
 
   const cancelGenerating = () => {
     if (abortControllerRef.current) {
