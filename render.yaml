@@ -6,7 +6,7 @@ services:
     name: spurly-backend
     runtime: node
     # Build command navigates to the backend directory, installs dependencies, and runs build
-    buildCommand: cd backend && npm install && npm run build
+    buildCommand: cd backend && npm install --include=dev && npm run build
     # Start command runs the compiled Express production server
     startCommand: cd backend && npm run start
     plan: free
